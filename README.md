@@ -69,7 +69,8 @@ The GitHub Actions workflow in `.github/workflows/build-and-deploy.yml`:
 6. Paste the complete publish profile XML into the secret.
 7. On the **Variables** tab, create a repository variable named
    `AZURE_FUNCTIONAPP_NAME`. Set it to the exact Function App resource name
-   shown in Azure, without `https://` or `.azurewebsites.net`.
+   shown in Azure, without `https://` or `.azurewebsites.net`. This is optional
+   when the resource name is `klpt-functions`, which is the workflow default.
 
 The workflow uses GitHub's `production` environment. Creating that environment
 in **Settings > Environments** is optional, but allows deployment approvals and

@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AZURE_FUNCTIONAPP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
+  AZURE_FUNCTIONAPP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'klpt-functions' }}
   PROJECT_PATH: klpt-functions/klpt-functions.csproj
   PUBLISH_PATH: ${{ github.workspace }}/publish
   DOTNET_VERSION: 9.0.x
