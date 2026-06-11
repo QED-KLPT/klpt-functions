@@ -67,6 +67,9 @@ The GitHub Actions workflow in `.github/workflows/build-and-deploy.yml`:
 5. Create a repository secret named
    `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`.
 6. Paste the complete publish profile XML into the secret.
+7. On the **Variables** tab, create a repository variable named
+   `AZURE_FUNCTIONAPP_NAME`. Set it to the exact Function App resource name
+   shown in Azure, without `https://` or `.azurewebsites.net`.
 
 The workflow uses GitHub's `production` environment. Creating that environment
 in **Settings > Environments** is optional, but allows deployment approvals and
@@ -75,3 +78,7 @@ environment-specific protection rules to be added later.
 Application settings such as `VideoAccess__Passkey` and
 `VideoStorage__ConnectionString` remain configured on the Azure Function App.
 The deployment workflow does not overwrite them.
+
+The Function App uses the Flex Consumption plan, so the deployment action is
+configured with `sku: flexconsumption`. This selects OneDeploy rather than the
+classic Kudu ZipDeploy endpoint.

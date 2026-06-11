@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AZURE_FUNCTIONAPP_NAME: klpt-functions
+  AZURE_FUNCTIONAPP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
   PROJECT_PATH: klpt-functions/klpt-functions.csproj
   PUBLISH_PATH: ${{ github.workspace }}/publish
   DOTNET_VERSION: 9.0.x
@@ -77,3 +77,4 @@ jobs:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
           package: ${{ env.PUBLISH_PATH }}
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          sku: flexconsumption
