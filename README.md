@@ -46,7 +46,15 @@ Configure these application settings locally and in the Azure Function App:
 | `VideoAccess__SasLifetimeMinutes` | `60` | SAS lifetime, clamped to 1-120 minutes. |
 | `VideoStorage__ConnectionString` | storage connection string | Must contain an account key so the app can sign the SAS. |
 | `VideoStorage__ContainerName` | `klpt-videos` | Private Blob container containing the videos. |
-| `VideoAssets__sample-video` | `sample-video.mp4` | Maps a public video ID to a blob name. Add one setting per video. |
+
+Video IDs are allow-listed in `klpt-functions/vid-mapping.json`. Add one entry
+per protected video, mapping the public ID used by the client to its blob name:
+
+```json
+{
+  "sample-vid-smash-cake": "sample-vid-smash-cake.mp4"
+}
+```
 
 Keep the container private. Add the KLPT site origin to:
 

@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace klpt_functions;
 
 public sealed class GetVideoAccess
 {
+  private const string VideoMappingFileName = "vid-mapping.json";
   private const int DefaultSasLifetimeMinutes = 60;
   private const int MaximumSasLifetimeMinutes = 120;
   private const int DefaultAccessTokenLifetimeMinutes = 60;
@@ -20,13 +22,16 @@ public sealed class GetVideoAccess
   private const string AccessTokenVersion = "v1";
 
   private readonly IConfiguration Configuration;
+  private readonly IReadOnlyDictionary<string, string> VideoMappings;
   private readonly ILogger<GetVideoAccess> Logger;
 
   public GetVideoAccess(
     IConfiguration configuration,
+    IHostEnvironment hostEnvironment,
     ILogger<GetVideoAccess> logger)
   {
     Configuration = configuration;
+    VideoMappings = LoadVideoMappings(hostEnvironment.ContentRootPath);
     Logger = logger;
   }
 
@@ -79,8 +84,8 @@ public sealed class GetVideoAccess
       };
     }
 
-    var blobName = Configuration[$"VideoAssets:{accessRequest.VideoId}"];
-    if (string.IsNullOrWhiteSpace(blobName))
+    if (!VideoMappings.TryGetValue(accessRequest.VideoId, out var blobName) ||
+        string.IsNullOrWhiteSpace(blobName))
     {
       return new NotFoundObjectResult(
         new ErrorResponse("The requested video was not found."));
@@ -286,6 +291,21 @@ public sealed class GetVideoAccess
     return HMACSHA256.HashData(
       Encoding.UTF8.GetBytes(signingKey),
       Encoding.UTF8.GetBytes(payload));
+  }
+
+  private static IReadOnlyDictionary<string, string> LoadVideoMappings(
+    string contentRootPath)
+  {
+    var mappingPath = Path.Combine(contentRootPath, VideoMappingFileName);
+    using var mappingStream = File.OpenRead(mappingPath);
+    var mappings =
+      JsonSerializer.Deserialize<Dictionary<string, string>>(mappingStream)
+      ?? throw new InvalidOperationException(
+        $"{VideoMappingFileName} must contain a JSON object.");
+
+    return new Dictionary<string, string>(
+      mappings,
+      StringComparer.OrdinalIgnoreCase);
   }
 
   private static string Base64UrlEncode(byte[] value)
