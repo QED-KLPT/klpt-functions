@@ -1,0 +1,79 @@
+name: Build and deploy KLPT Functions
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: klpt-functions-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AZURE_FUNCTIONAPP_NAME: klpt-functions
+  PROJECT_PATH: klpt-functions/klpt-functions.csproj
+  PUBLISH_PATH: ${{ github.workspace }}/publish
+  DOTNET_VERSION: 9.0.x
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.PROJECT_PATH }}"
+
+      - name: Build
+        run: dotnet build "${{ env.PROJECT_PATH }}" --configuration Release --no-restore
+
+      - name: Publish deployment package
+        run: >
+          dotnet publish "${{ env.PROJECT_PATH }}"
+          --configuration Release
+          --no-restore
+          --output "${{ env.PUBLISH_PATH }}"
+          /p:UseAppHost=false
+
+      - name: Upload deployment package
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: function-app
+          path: ${{ env.PUBLISH_PATH }}
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Download deployment package
+        uses: actions/download-artifact@v4
+        with:
+          name: function-app
+          path: ${{ env.PUBLISH_PATH }}
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.PUBLISH_PATH }}
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}

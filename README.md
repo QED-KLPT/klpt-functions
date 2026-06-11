@@ -47,3 +47,31 @@ would be visible to every browser user.
 
 For local development, set `AzureWebJobsStorage` to `UseDevelopmentStorage=true`
 when using Azurite, or to a valid development storage connection string.
+
+## CI/CD
+
+The GitHub Actions workflow in `.github/workflows/build-and-deploy.yml`:
+
+- Restores and builds the Function app for pull requests targeting `master`.
+- Publishes and deploys successful pushes to `master`.
+- Can also be run manually from the GitHub Actions tab.
+
+### One-time deployment setup
+
+1. In the Azure portal, open the `klpt-functions` Function App.
+2. Under **Configuration > General settings**, enable **SCM Basic Auth
+   Publishing Credentials** if it is disabled.
+3. Download the Function App publish profile.
+4. In the GitHub repository, open **Settings > Secrets and variables >
+   Actions**.
+5. Create a repository secret named
+   `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`.
+6. Paste the complete publish profile XML into the secret.
+
+The workflow uses GitHub's `production` environment. Creating that environment
+in **Settings > Environments** is optional, but allows deployment approvals and
+environment-specific protection rules to be added later.
+
+Application settings such as `VideoAccess__Passkey` and
+`VideoStorage__ConnectionString` remain configured on the Azure Function App.
+The deployment workflow does not overwrite them.
