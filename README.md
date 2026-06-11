@@ -100,6 +100,10 @@ Application settings such as `VideoAccess__Passkey` and
 `VideoStorage__ConnectionString` remain configured on the Azure Function App.
 The deployment workflow does not overwrite them.
 
+Azure Monitor export is enabled automatically when the Function App has an
+`APPLICATIONINSIGHTS_CONNECTION_STRING` application setting. The worker still
+starts when Application Insights has not yet been connected.
+
 The Function App uses the Flex Consumption plan, so the deployment action is
 configured with `sku: flexconsumption`. This selects OneDeploy rather than the
 classic Kudu ZipDeploy endpoint. The build artifact must include the generated
