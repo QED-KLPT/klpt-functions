@@ -19,14 +19,14 @@ public sealed class GetVideoAccess
   private const int MaximumAccessTokenLifetimeMinutes = 240;
   private const string AccessTokenVersion = "v1";
 
-  private readonly IConfiguration _configuration;
+  private readonly IConfiguration Configuration;
   private readonly ILogger<GetVideoAccess> Logger;
 
   public GetVideoAccess(
     IConfiguration configuration,
     ILogger<GetVideoAccess> logger)
   {
-    _configuration = configuration;
+    Configuration = configuration;
     Logger = logger;
   }
 
@@ -79,15 +79,15 @@ public sealed class GetVideoAccess
       };
     }
 
-    var blobName = _configuration[$"VideoAssets:{accessRequest.VideoId}"];
+    var blobName = Configuration[$"VideoAssets:{accessRequest.VideoId}"];
     if (string.IsNullOrWhiteSpace(blobName))
     {
       return new NotFoundObjectResult(
         new ErrorResponse("The requested video was not found."));
     }
 
-    var connectionString = _configuration["VideoStorage:ConnectionString"];
-    var containerName = _configuration["VideoStorage:ContainerName"];
+    var connectionString = Configuration["VideoStorage:ConnectionString"];
+    var containerName = Configuration["VideoStorage:ContainerName"];
     if (string.IsNullOrWhiteSpace(connectionString) ||
         string.IsNullOrWhiteSpace(containerName))
     {
@@ -181,8 +181,8 @@ public sealed class GetVideoAccess
 
   private AuthenticationResult Authenticate(VideoAccessRequest request)
   {
-    var configuredPasskey = _configuration["VideoAccess:Passkey"];
-    var signingKey = _configuration["VideoAccess:SessionSigningKey"];
+    var configuredPasskey = Configuration["VideoAccess:Passkey"];
+    var signingKey = Configuration["VideoAccess:SessionSigningKey"];
 
     if (string.IsNullOrWhiteSpace(configuredPasskey) ||
         string.IsNullOrWhiteSpace(signingKey))
@@ -207,7 +207,7 @@ public sealed class GetVideoAccess
 
   private string CreateAccessToken(out DateTimeOffset expiresAt)
   {
-    var signingKey = _configuration["VideoAccess:SessionSigningKey"]!;
+    var signingKey = Configuration["VideoAccess:SessionSigningKey"]!;
     expiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenLifetimeMinutes());
     var nonce = Base64UrlEncode(RandomNumberGenerator.GetBytes(16));
     var payload = $"{AccessTokenVersion}.{expiresAt.ToUnixTimeSeconds()}.{nonce}";
@@ -257,7 +257,7 @@ public sealed class GetVideoAccess
   private int GetSasLifetimeMinutes()
   {
     return int.TryParse(
-      _configuration["VideoAccess:SasLifetimeMinutes"],
+      Configuration["VideoAccess:SasLifetimeMinutes"],
       out var configuredMinutes)
       ? Math.Clamp(configuredMinutes, 1, MaximumSasLifetimeMinutes)
       : DefaultSasLifetimeMinutes;
@@ -266,7 +266,7 @@ public sealed class GetVideoAccess
   private int GetAccessTokenLifetimeMinutes()
   {
     return int.TryParse(
-      _configuration["VideoAccess:AccessTokenLifetimeMinutes"],
+      Configuration["VideoAccess:AccessTokenLifetimeMinutes"],
       out var configuredMinutes)
       ? Math.Clamp(configuredMinutes, 1, MaximumAccessTokenLifetimeMinutes)
       : DefaultAccessTokenLifetimeMinutes;
