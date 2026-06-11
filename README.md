@@ -2,8 +2,9 @@
 
 ## Protected video access
 
-`POST /api/videos/access` validates a shared passkey and returns a short-lived,
-read-only SAS URL for an allow-listed video.
+`POST /api/videos/access` accepts an allow-listed video ID and either the shared
+passkey or a previously issued access token. It returns a short-lived, read-only
+SAS URL for that video plus a reusable application access token.
 
 Example request:
 
@@ -18,8 +19,20 @@ Example response:
 
 ```json
 {
+  "videoId": "sample-video",
   "url": "https://example.blob.core.windows.net/klpt-videos/sample-video.mp4?...",
-  "expiresAt": "2026-06-11T03:00:00+00:00"
+  "expiresAt": "2026-06-11T03:00:00+00:00",
+  "accessToken": "v1.1781146800.nonce.signature",
+  "accessTokenExpiresAt": "2026-06-11T03:00:00+00:00"
+}
+```
+
+For another video during the access-token lifetime, omit the passkey:
+
+```json
+{
+  "videoId": "another-video",
+  "accessToken": "v1.1781146800.nonce.signature"
 }
 ```
 
@@ -28,6 +41,8 @@ Configure these application settings locally and in the Azure Function App:
 | Setting | Example | Purpose |
 | --- | --- | --- |
 | `VideoAccess__Passkey` | `temporary-secret` | Shared passkey. In Azure, prefer a Key Vault reference. |
+| `VideoAccess__SessionSigningKey` | random 32+ byte secret | Signs the reusable access token. Store it as a secret or Key Vault reference. |
+| `VideoAccess__AccessTokenLifetimeMinutes` | `60` | Time during which another video can be requested without the passkey, clamped to 1-240 minutes. |
 | `VideoAccess__SasLifetimeMinutes` | `60` | SAS lifetime, clamped to 1-120 minutes. |
 | `VideoStorage__ConnectionString` | storage connection string | Must contain an account key so the app can sign the SAS. |
 | `VideoStorage__ContainerName` | `klpt-videos` | Private Blob container containing the videos. |
@@ -44,6 +59,11 @@ Ensure MP4 blobs have `Content-Type: video/mp4`.
 The endpoint uses anonymous Function authorization because the passkey is the
 POC credential. Do not put a Function host key in the Angular application; it
 would be visible to every browser user.
+
+Each SAS remains scoped to one blob. The reusable access token authorizes the
+client to request another video-specific SAS without submitting the passkey
+again. The client should discard both values after their respective expiry
+times.
 
 For local development, set `AzureWebJobsStorage` to `UseDevelopmentStorage=true`
 when using Azurite, or to a valid development storage connection string.
