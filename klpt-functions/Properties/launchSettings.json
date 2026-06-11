@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "klpt_functions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7169"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "containerRunArguments": "--init",
+      "httpPort": 31584,
+      "useSSL": false
+    }
+  }
+}
