@@ -55,6 +55,7 @@ jobs:
         with:
           name: function-app
           path: ${{ env.PUBLISH_PATH }}
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
 
@@ -70,6 +71,13 @@ jobs:
         with:
           name: function-app
           path: ${{ env.PUBLISH_PATH }}
+
+      - name: Validate deployment package
+        shell: bash
+        run: |
+          test -d "${{ env.PUBLISH_PATH }}/.azurefunctions"
+          test -f "${{ env.PUBLISH_PATH }}/host.json"
+          test -f "${{ env.PUBLISH_PATH }}/functions.metadata"
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1

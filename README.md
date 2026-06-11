@@ -82,4 +82,6 @@ The deployment workflow does not overwrite them.
 
 The Function App uses the Flex Consumption plan, so the deployment action is
 configured with `sku: flexconsumption`. This selects OneDeploy rather than the
-classic Kudu ZipDeploy endpoint.
+classic Kudu ZipDeploy endpoint. The build artifact must include the generated
+hidden `.azurefunctions` directory at its root; the workflow explicitly
+preserves hidden files when transferring the package between jobs.
