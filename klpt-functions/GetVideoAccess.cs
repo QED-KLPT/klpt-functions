@@ -17,14 +17,14 @@ public sealed class GetVideoAccess
   private const int MaximumSasLifetimeMinutes = 120;
 
   private readonly IConfiguration _configuration;
-  private readonly ILogger<GetVideoAccess> _logger;
+  private readonly ILogger<GetVideoAccess> Logger;
 
   public GetVideoAccess(
       IConfiguration configuration,
       ILogger<GetVideoAccess> logger)
   {
     _configuration = configuration;
-    _logger = logger;
+    Logger = logger;
   }
 
   [Function("GetVideoAccess")]
@@ -57,7 +57,7 @@ public sealed class GetVideoAccess
     var configuredPasskey = _configuration["VideoAccess:Passkey"];
     if (string.IsNullOrWhiteSpace(configuredPasskey))
     {
-      _logger.LogError("VideoAccess:Passkey is not configured.");
+      Logger.LogError("VideoAccess:Passkey is not configured.");
       return new ObjectResult(new ErrorResponse("Video access is not configured."))
       {
         StatusCode = StatusCodes.Status500InternalServerError,
@@ -66,7 +66,7 @@ public sealed class GetVideoAccess
 
     if (!PasskeysMatch(accessRequest.Passkey, configuredPasskey))
     {
-      _logger.LogWarning(
+      Logger.LogWarning(
           "Video access was denied for video ID {VideoId}.",
           accessRequest.VideoId);
 
@@ -87,7 +87,7 @@ public sealed class GetVideoAccess
     if (string.IsNullOrWhiteSpace(connectionString) ||
         string.IsNullOrWhiteSpace(containerName))
     {
-      _logger.LogError("Video storage settings are incomplete.");
+      Logger.LogError("Video storage settings are incomplete.");
       return new ObjectResult(new ErrorResponse("Video storage is not configured."))
       {
         StatusCode = StatusCodes.Status500InternalServerError,
@@ -101,7 +101,7 @@ public sealed class GetVideoAccess
 
       if (!await blobClient.ExistsAsync(cancellationToken))
       {
-        _logger.LogWarning(
+        Logger.LogWarning(
             "Configured blob {BlobName} was not found in container {ContainerName}.",
             blobName,
             containerName);
@@ -112,7 +112,7 @@ public sealed class GetVideoAccess
 
       if (!blobClient.CanGenerateSasUri)
       {
-        _logger.LogError(
+        Logger.LogError(
             "The configured storage credential cannot generate a SAS URI. " +
             "Use a storage connection string containing an account key.");
 
@@ -136,7 +136,7 @@ public sealed class GetVideoAccess
 
       var sasUri = blobClient.GenerateSasUri(sasBuilder);
 
-      _logger.LogInformation(
+      Logger.LogInformation(
           "Issued video access for video ID {VideoId}, expiring at {ExpiresAt}.",
           accessRequest.VideoId,
           expiresAt);
@@ -145,7 +145,7 @@ public sealed class GetVideoAccess
     }
     catch (Exception exception)
     {
-      _logger.LogError(
+      Logger.LogError(
           exception,
           "Could not issue video access for video ID {VideoId}.",
           accessRequest.VideoId);
