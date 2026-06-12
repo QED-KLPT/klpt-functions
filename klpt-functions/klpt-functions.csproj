@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <Content Include="local.settings.json" />
+    <EmbeddedResource Include="vid-mapping.json">
+      <LogicalName>vid-mapping.json</LogicalName>
+    </EmbeddedResource>
     <Content Include="vid-mapping.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

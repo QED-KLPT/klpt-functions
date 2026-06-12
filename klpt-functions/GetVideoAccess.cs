@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace klpt_functions;
@@ -27,11 +26,10 @@ public sealed class GetVideoAccess
 
   public GetVideoAccess(
     IConfiguration configuration,
-    IHostEnvironment hostEnvironment,
     ILogger<GetVideoAccess> logger)
   {
     Configuration = configuration;
-    VideoMappings = LoadVideoMappings(hostEnvironment.ContentRootPath);
+    VideoMappings = LoadVideoMappings();
     Logger = logger;
   }
 
@@ -293,11 +291,13 @@ public sealed class GetVideoAccess
       Encoding.UTF8.GetBytes(payload));
   }
 
-  private static IReadOnlyDictionary<string, string> LoadVideoMappings(
-    string contentRootPath)
+  private static IReadOnlyDictionary<string, string> LoadVideoMappings()
   {
-    var mappingPath = Path.Combine(contentRootPath, VideoMappingFileName);
-    using var mappingStream = File.OpenRead(mappingPath);
+    using var mappingStream =
+      typeof(GetVideoAccess).Assembly.GetManifestResourceStream(
+        VideoMappingFileName)
+      ?? throw new InvalidOperationException(
+        $"Embedded resource {VideoMappingFileName} could not be found.");
     var mappings =
       JsonSerializer.Deserialize<Dictionary<string, string>>(mappingStream)
       ?? throw new InvalidOperationException(
