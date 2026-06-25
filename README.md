@@ -76,6 +76,53 @@ times.
 For local development, set `AzureWebJobsStorage` to `UseDevelopmentStorage=true`
 when using Azurite, or to a valid development storage connection string.
 
+## Protected site access
+
+`POST /api/site/access` accepts a shared passkey and returns a reusable access
+token. Use this endpoint to gate entry to the site before the user can access
+any protected content.
+
+Example request (first visit — supply the passkey):
+
+```json
+{
+  "passkey": "the-shared-passkey"
+}
+```
+
+Example response:
+
+```json
+{
+  "accessToken": "v1.1781146800.nonce.signature",
+  "accessTokenExpiresAt": "2026-06-25T11:00:00+00:00"
+}
+```
+
+On subsequent requests during the token lifetime, omit the passkey and supply
+the token instead:
+
+```json
+{
+  "accessToken": "v1.1781146800.nonce.signature"
+}
+```
+
+Configure these application settings locally and in the Azure Function App:
+
+| Setting | Example | Purpose |
+| --- | --- | --- |
+| `SiteAccess__Passkey` | `temporary-secret` | Shared passkey. In Azure, prefer a Key Vault reference. |
+| `SiteAccess__SessionSigningKey` | random 32+ byte secret | Signs the reusable access token. Store it as a secret or Key Vault reference. |
+| `SiteAccess__AccessTokenLifetimeMinutes` | `60` | Token lifetime, clamped to 1-240 minutes. Defaults to 60. |
+
+The endpoint uses anonymous Function authorization because the passkey is the
+credential. Do not put a Function host key in the Angular application; it would
+be visible to every browser user.
+
+The client should store the access token and reuse it for the token's lifetime,
+then prompt the user for the passkey again when it expires.
+
 ## CI/CD
 
 The GitHub Actions workflow in `.github/workflows/build-and-deploy.yml`:
