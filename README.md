@@ -127,8 +127,10 @@ then prompt the user for the passkey again when it expires.
 
 The GitHub Actions workflow in `.github/workflows/build-and-deploy.yml`:
 
-- Restores and builds the Function app for pull requests targeting `master`.
-- Publishes and deploys successful pushes to `master`.
+- Restores and builds the Function app for pull requests targeting `main` or
+  `dev`.
+- Publishes and deploys successful pushes to `main` to `klpt-functions`.
+- Publishes and deploys successful pushes to `dev` to `klpt-functions-dev`.
 - Can also be run manually from the GitHub Actions tab.
 
 ### One-time deployment setup
@@ -142,14 +144,14 @@ The GitHub Actions workflow in `.github/workflows/build-and-deploy.yml`:
 5. Create a repository secret named
    `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`.
 6. Paste the complete publish profile XML into the secret.
-7. On the **Variables** tab, create a repository variable named
-   `AZURE_FUNCTIONAPP_NAME`. Set it to the exact Function App resource name
-   shown in Azure, without `https://` or `.azurewebsites.net`. This is optional
-   when the resource name is `klpt-functions`, which is the workflow default.
+7. Repeat the process for the `klpt-functions-dev` Function App and save its
+   complete publish profile as the repository secret
+   `AZURE_FUNCTIONAPP_PUBLISH_PROFILE_DEV`.
 
-The workflow uses GitHub's `production` environment. Creating that environment
-in **Settings > Environments** is optional, but allows deployment approvals and
-environment-specific protection rules to be added later.
+The workflow uses GitHub's `production` and `development` environments. Creating
+these environments in **Settings > Environments** is optional, but allows
+deployment approvals and environment-specific protection rules to be added
+later.
 
 Application settings such as `VideoAccess__Passkey` and
 `VideoStorage__ConnectionString` remain configured on the Azure Function App.

@@ -3,10 +3,12 @@ name: Build and deploy KLPT Functions
 on:
   push:
     branches:
-      - master
+      - main
+      - dev
   pull_request:
     branches:
-      - master
+      - main
+      - dev
   workflow_dispatch:
 
 permissions:
@@ -17,7 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AZURE_FUNCTIONAPP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'klpt-functions' }}
   PROJECT_PATH: klpt-functions/klpt-functions.csproj
   PUBLISH_PATH: ${{ github.workspace }}/publish
   DOTNET_VERSION: 9.0.x
@@ -59,8 +60,8 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  deploy:
-    if: github.event_name != 'pull_request'
+  deploy-production:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment: production
@@ -82,7 +83,35 @@ jobs:
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          app-name: klpt-functions
           package: ${{ env.PUBLISH_PATH }}
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          sku: flexconsumption
+
+  deploy-development:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Download deployment package
+        uses: actions/download-artifact@v4
+        with:
+          name: function-app
+          path: ${{ env.PUBLISH_PATH }}
+
+      - name: Validate deployment package
+        shell: bash
+        run: |
+          test -d "${{ env.PUBLISH_PATH }}/.azurefunctions"
+          test -f "${{ env.PUBLISH_PATH }}/host.json"
+          test -f "${{ env.PUBLISH_PATH }}/functions.metadata"
+
+      - name: Deploy to Azure Functions development
+        uses: Azure/functions-action@v1
+        with:
+          app-name: klpt-functions-dev
+          package: ${{ env.PUBLISH_PATH }}
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_DEV }}
           sku: flexconsumption
